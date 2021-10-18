@@ -14,8 +14,18 @@ http = require('http')
 chokidar= require "chokidar"; WS= require "ws"
 byteSize= require "byte-size"; process= require "process"
 
+require("dotenv").config path: path.resolve(".env")
 config= require(path.resolve("config.coffee"))
-{env, entries, dev}= config
+{entries}= config
+
+env = config.env ? process.env.NODE_ENV ? "development"
+dev = config.dev ?
+  host: process.env.HOST ? "localhost"
+  port: process.env.PORT ? 3000
+  wsport: process.env.WSPORT ? 3001
+watch= dev.watch ? sass: "src/sass", pug: "src/pug", coffee: "src/coffee"
+
+
 
 ws_server= new WS.Server {host: dev.host, port: dev.wsport}
 console.log "WebSocket server running at http://#{dev.host}:#{dev.wsport}"
@@ -85,8 +95,8 @@ class PugCompiler extends Compiler
       pageTitle: "ほげほげ"
       filename: path.resolve(entry), self: on
       assetUrls:
-        sass: _.mapObject sassCompiler.results, (item, key)->"#{config.compiledUrl}#{key}.css"
-        coffee: _.mapObject coffeeCompiler.results, (item, key)->"#{config.compiledUrl}#{key}.js"
+        sass: _.mapObject sassCompiler?.results, (item, key)->"#{config.compiledUrl}#{key}.css"
+        coffee: _.mapObject coffeeCompiler?.results, (item, key)->"#{config.compiledUrl}#{key}.js"
     }
     try
       pugString= fs.readFileSync(path.resolve(entry)).toString()
@@ -100,22 +110,13 @@ class PugCompiler extends Compiler
     catch error
       console.log error
 
-sassCompiler= new SassCompiler dev.watch.sass, entries.sass
-coffeeCompiler= new CoffeeCompiler dev.watch.coffee, entries.coffee
-pugCompiler= new PugCompiler dev.watch.pug, entries.pug
+sassCompiler= if fs.existsSync(watch.sass) then new SassCompiler watch.sass, entries.sass
+coffeeCompiler= if fs.existsSync(watch.coffee) then new CoffeeCompiler watch.coffee, entries.coffee
+pugCompiler= if fs.existsSync(watch.pug) then new PugCompiler watch.pug, entries.pug
 do ->
-  await sassCompiler.watch()
-  await coffeeCompiler.watch()
-  pugCompiler.watch()
-
-# module.exports= router(
-#   get '/:key.js(.:map)', (req, res)->
-#     send res, 200, coffeeCompiler[if req.params.map? then "sourceMaps" else "results"][req.params.key]
-#   get '/:key.css(.:map)', (req, res)->
-#     send res, 200, sassCompiler[if req.params.map? then "sourceMaps" else "results"][req.params.key]
-# )
-
-
+  await sassCompiler?.watch()
+  await coffeeCompiler?.watch()
+  pugCompiler?.watch()
 
 server= new http.Server router(
   get '/:key.js(.:map)', (req, res)->

@@ -8,7 +8,7 @@
   },
   "bin": {
     "dev-server": "devServer.js",
-    "compile" :"compile.js"
+    "compile": "compile.js"
   },
   "author": "artovenry@gmail.com",
   "license": "MIT",

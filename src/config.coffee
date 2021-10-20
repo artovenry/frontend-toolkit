@@ -8,7 +8,8 @@ env = config.env ? process.env.NODE_ENV ? "development"
 isDev= env is "development"
 
 module.exports=
-  entries: config.entries
+  entries: defaults (config.entries ? {}),
+    sass: [], coffee: [], pug: []
   env: env
   dev: defaults (config.dev ? {}),
     host: process.env.HOST ? "localhost"
@@ -22,19 +23,16 @@ module.exports=
   compilerOpts:
     sass: defaults (config.compilerOpts?.sass ? {}),
       includePaths: ["node_modules"]
-      sourceMap : if isDev then on else off
+      sourceMap : if isDev then on  else off
       hashBust  : if isDev then off else on
       minify    : if isDev then off else on
       purge     : if isDev then off else on
-
-
     coffee: defaults (config.compilerOpts?.coffee ? {}),
       define: defaults (config.compilerOpts?.coffee?.define ? {}),
         'process.env.NODE_ENV': JSON.stringify(env)
       resolve: ["node_modules"]
       minify    : if isDev then off else on
-      sourceMap : if isDev then on else off
+      sourceMap : if isDev then on  else off
       hashBust  : if isDev then off else on
-
     pug: defaults (config.compilerOpts?.pug ? {}),
       self: on, locals: {}

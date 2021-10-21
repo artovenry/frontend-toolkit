@@ -18,7 +18,7 @@ module.exports=
   watch: defaults (config.watch ? {}),
     sass: "src/sass", pug: "src/pug", coffee: "src/coffee"
   output: config.output ? "compiled"
-  hashLength: config.output ? 8
+  hashLength: config.hashLength ? 8
   assetUrl: config.assetUrl ? "http://#{dev.host}:#{dev.port}/"
   compilerOpts:
     sass: defaults (config.compilerOpts?.sass ? {}),

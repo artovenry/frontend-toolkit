@@ -1,6 +1,6 @@
 {compact} = require "underscore"
 byteSize= require "byte-size"
-config= require "../config"
+config= require "./config"
 Asset= require "./asset"
 rollup= require "rollup"
 coffee = require "rollup-plugin-coffee-script"
@@ -33,6 +33,8 @@ module.exports= class extends Asset
       if opts.sourceMap and map?
         @code += "\n //#sourceMappingURL=#{@outputFilename}.map"
         @map= map.toString()
+      else
+        @map= null
 
       size= byteSize(Buffer.byteLength(code)).toString()
       @deps= bundle.watchFiles

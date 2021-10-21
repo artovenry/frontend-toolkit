@@ -1,5 +1,5 @@
 crypto= require "crypto"
-config= require "../config"
+config= require "./config"
 
 module.exports= (str)->
   shasum= crypto.createHash('sha1')

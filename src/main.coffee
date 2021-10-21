@@ -1,4 +1,5 @@
 require 'coffeescript/register'
+{entries}= require "./config"
 {flatten}= require "underscore"
 SassAsset= require "./sassAsset"
 CoffeeAsset= require "./coffeeAsset"

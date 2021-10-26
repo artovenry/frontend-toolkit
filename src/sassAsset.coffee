@@ -9,6 +9,12 @@ opts= config.compilerOpts.sass
 purge= (code)->
   {PurgeCSS}= require "purgecss"
 
+  code= await new PurgeCSS().purge {
+    opts.purge...,
+    css: raw:
+
+  }
+
 
 
 module.exports= class extends Asset

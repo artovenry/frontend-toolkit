@@ -26,7 +26,8 @@ module.exports=
       sourceMap : if isDev then on  else off
       hashBust  : if isDev then off else on
       minify    : if isDev then off else on
-      purge     : if isDev then off else on
+      purge     : if isDev then off else config.compilerOpts?.sass?.purge ? {}
+
     coffee: defaults (config.compilerOpts?.coffee ? {}),
       define: defaults (config.compilerOpts?.coffee?.define ? {}),
         'process.env.NODE_ENV': JSON.stringify(env)

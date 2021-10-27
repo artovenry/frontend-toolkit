@@ -6,30 +6,37 @@ Asset= require "./asset"
 sass= require "sass"
 opts= config.compilerOpts.sass
 
-purge= (code)->
-  {PurgeCSS}= require "purgecss"
-
-  code= await new PurgeCSS().purge {
-    opts.purge...,
-    css: raw:
-
-  }
-
-
-
 module.exports= class extends Asset
-  @assets= []
+  if config.purge?
+    {PurgeCSS}= require "purgecss"
+    purge: (htmls)->
+      result= await new PurgeCSS().purge {
+        content: htmls.map (h)->extension: "html", raw: h
+        css: [raw: @code]
+      }
+      @code= result[0].css
+
+      size= byteSize(Buffer.byteLength(@code)).toString()
+      console.log "Purged: #{@entry} #{size}"
+
+      @setOutputFilename()
+
+  setOutputFilename: ->
+    name= @name
+    if opts.hashBust then name += "-" + (require "./hash")(@code)
+    @outputFilename= name + ".css"
+
   compile: ->
     try
       {css, map, stats}= sass.renderSync
-        outFile: path.basename(@entry) + ".css"
+        outFile: @name + ".css"
         file: path.resolve(@entry)
         includePaths: opts.includePaths
         outputStyle: if opts.minify then "compressed" else "expanded"
-        sourceMap: if opts.purge then off else if opts.sourceMap then on else off
-      @code= css.toString()
-      @code= await if opts.purge then purge(@code)
+        sourceMap: if config.purge or opts.hashBust then off else if opts.sourceMap then on else off
 
+      @code= css.toString()
+      @setOutputFilename()
       @map= map?.toString()
       size= byteSize(Buffer.byteLength(@code)).toString()
       @deps= stats.includedFiles

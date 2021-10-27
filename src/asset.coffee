@@ -2,7 +2,7 @@ path= require "path"
 fs= require "fs"
 config= require "./config"
 
-class Asset
+module.exports= class
   constructor: (entry)->
     @entry= entry; @deps= []; @map= null; @code= ""; @outputFilename= "";
     @name= path.parse(entry).name

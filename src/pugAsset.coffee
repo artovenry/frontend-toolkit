@@ -3,8 +3,6 @@ pug= require "pug"
 config= require "./config"
 {defaults}= require "underscore"
 Asset= require "./asset"
-sassAssets= (require "./sassAsset").assets
-coffeeAssets= (require "./coffeeAsset").assets
 
 buildAssetUrls= (assets)->
   assets.reduce (m, a)->
@@ -12,8 +10,8 @@ buildAssetUrls= (assets)->
     return m
   , {}
 
-module.exports= class extends Compiler
-  compile: ->
+module.exports= class extends Asset
+  compile: (assets)->
     try
       pugString= fs.readFileSync(path.resolve(@entry)).toString()
       {body, dependencies}= pug.compileClientWithDependenciesTracked pugString, filename: path.resolve(@entry), self: config.compilerOpts.pug.self
@@ -21,9 +19,10 @@ module.exports= class extends Compiler
       @deps.push path.resolve(@entry) # dependencies doesnt include entry as a part of itself
       locals= defaults (config.compilerOpts.pug.locals),
         env: config.env, dev: config.dev
-      locals.assets= sass: buildAssetUrls(sassAssets), coffee: buildAssetUrls(coffeeAssets)
+      locals.assets= sass: buildAssetUrls(assets.sass), coffee: buildAssetUrls(assets.coffee)
       locals= JSON.stringify(locals)
-      @results[key]= eval(body + "; template(#{locals})")
+      @code= eval(body + "; template(#{locals})")
+      @outputFilename= @name
       console.log "Compiled: #{@entry}"
 
     catch error

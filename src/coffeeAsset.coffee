@@ -19,14 +19,13 @@ plugins= compact [
 ]
 
 module.exports= class extends Asset
-  @assets= []
   compile: ->
     try
       bundle= await rollup.rollup {plugins, input: path.resolve(@entry)}
       {output}= await bundle.generate format: "iife", sourcemap: opts.sourceMap
       {code, map}= output[0]
       @code= code
-      @outputFilename= do ->
+      @outputFilename= do =>
         name= @name
         if opts.hashBust then name += "-" + (require "./hash")(code)
         return name + ".js"

@@ -20,8 +20,8 @@ module.exports= class extends Asset
       {body, dependencies}= pug.compileClientWithDependenciesTracked pugString, filename: path.resolve(@entry), self: config.compilerOpts.pug.self
       @deps= dependencies
       @deps.push path.resolve(@entry) # dependencies doesnt include entry as a part of itself
-      locals= defaults (config.compilerOpts.pug.locals),
-        env: config.env, dev: config.dev
+      locals= config.compilerOpts.pug.locals
+      locals.env= config.env; locals.dev= config.dev
       locals.assets= @constructor.buildAssetUrls()
       locals= JSON.stringify(locals)
       @code= eval(body + "; template(#{locals})")

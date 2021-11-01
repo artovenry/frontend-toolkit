@@ -10,8 +10,13 @@ buildAssetUrls= (assets)->
     return m
   , {}
 
+
+assets= sass: [], coffee: []
+
 module.exports= class extends Asset
-  compile: (assets)->
+  updateAssets: (_assets)->assets.sass= _assets.sass; assets.coffee= _assets.coffee
+  setOutputFilename: ->@outputFilename= @name
+  compile: ->
     try
       pugString= fs.readFileSync(path.resolve(@entry)).toString()
       {body, dependencies}= pug.compileClientWithDependenciesTracked pugString, filename: path.resolve(@entry), self: config.compilerOpts.pug.self
@@ -22,8 +27,10 @@ module.exports= class extends Asset
       locals.assets= sass: buildAssetUrls(assets.sass), coffee: buildAssetUrls(assets.coffee)
       locals= JSON.stringify(locals)
       @code= eval(body + "; template(#{locals})")
-      @outputFilename= @name
+      @setOutputFilename()
       console.log "Compiled: #{@entry}"
+
+      @write()
 
     catch error
       console.log error

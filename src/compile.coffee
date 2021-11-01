@@ -10,9 +10,10 @@ coffeeAssets= entries.coffee.map (entry)->new CoffeeAsset entry
 pugAssets= entries.pug.map (entry)->new PugAsset entry
 
 
-compileAndWritePugs= ->
+compilePugs= ->
   Promise.all pugAssets.map (a)->
-    await a.compile(sass: sassAssets, coffee: coffeeAssets); a.write()
+    a.updateAssets sass: sassAssets, coffee: coffeeAssets
+    a.compile()
 
 do ->
   await Promise.all flatten [
@@ -23,7 +24,7 @@ do ->
       await a.compile()
       a.write()
   ]
-  await compileAndWritePugs()
+  await compilePugs()
 
   ###
     "global": ["index.php", "hoo.php", "bar.html"]
@@ -34,5 +35,5 @@ do ->
       sassAsset= findWhere sassAssets, {name}
       await sassAsset.purge pugAssetNames.map (name)->
         findWhere(pugAssets, {name}).code
-    compileAndWritePugs()
+    compilePugs()
     sassAssets.map (a)->a.write()

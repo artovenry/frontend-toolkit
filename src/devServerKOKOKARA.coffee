@@ -1,9 +1,8 @@
 require 'coffeescript/register'
-_= require "underscore"
 path= require "path"
 
-{env, entries, dev, watch}= require "./config.coffee"
-
+{env, entries, dev, watch}= require "./config"
+{select, contains}= require "underscore"
 
 http = require('http')
 {send}= require "micro"
@@ -16,41 +15,57 @@ console.log "WebSocket server running at http://#{dev.host}:#{dev.wsport}"
 process.on "SIGINT", ->ws_server.close(); process.exit(0)
 reload= ->ws_server.clients.forEach (c)->c.send "reload"
 
+class Watcher
+  constructor: (entries)->
+    @assets= entries.map (e)=>new @constructor.Asset e
+  compileAll: ->
+    Promise.all @assets.map (a)->a.compile()
+  compileAllIfDepends= (filepath)->
+    Promise.all do =>
+      select @assets, (a)->contains a.deps, filepath
+      .map (a)->a.compile()
+  @watch= ->(new @)._watch()
+  _watch: ->
+    target= path.resolve @constructor.targetDir
+    return if not fs.existsSync target
+    watcher= chokidar.watch target
+    return new Promise (done)=>
+      watcher.on "ready", =>
+        await @compileAll()
+        done @assets
+        watcher.on "all", (e, filepath)=>
+          return if not e.match /^(add|change|unlink)$/
+          await @compileAllIfDepends filepath
+          reload()
 
-# {Compiler, SassCompiler, CoffeeCompiler, PugCompiler}= require "./compiler.coffee"
+class SassWatcher extends Watcher
+  @targetDir= watch.sass
+  @Asset= require "./sassAsset"
+class CoffeeWatcher extends Watcher
+  @targetDir= watch.coffee
+  @Asset= require "./coffeeAsset"
 
-# Compiler::watch= (targetDir)->new Promise (done)=>
-#   watcher= chokidar.watch path.resolve(targetDir)
-#   watcher.on "ready", =>
-#     await @compileAll()
-#     reload()
-#     done()
-#     watcher.on "all", (e, filepath)=>
-#       return if not e.match /^(add|change|unlink)$/
-#       await Promise.all _.map @deps, (deps, entry)=>@compile entry if _.contains deps, filepath
-#       reload()
-#
-# PugCompiler::watch= (targetDir)->new Promise (done)=>
+sassAssets= []; coffeeAssets=[]
+do ->
+  sassAssets= await SassWatcher.watch()
+  coffeeAssets= await coffeeWatcher.watch()
 
-# do ->
-#   await if fs.existsSync(watch.sass) then sassCompiler.watch(watch.sass)
-#   await if fs.existsSync(watch.coffee) then coffeeCompiler.watch(watch.coffee)
-#   if fs.existsSync(watch.pug) then pugCompiler.watch(watch.pug)
+  class PugWatcher extends Watcher
+    @targetDir= watch.pug
+    @Asset= require "./pugAsset"
+    updateAssets: ->
+      @assets.forEach (a)->a.updateAssets sass: sassAssets, coffee: coffeeAssets
+    compileAll: ->
+      @updateAssets();super()
+    compileAllIfDepends: (filepath)->
+      @updateAssets();super(filepath)
 
-
-SassAsset= require "./sassAsset"
-CoffeeAsset= require "./coffeeAsset"
-PugAsset= require "./pugAsset"
-
-sassAssets= entries.sass.map (entry)->new SassAsset entry
-coffeeAssets= entries.coffee.map (entry)->new CoffeeAsset entry
-pugAssets= entries.pug.map (entry)->new PugAsset entry
-
-
-
+  PugWatcher.watch()
 
 server= new http.Server router(
   get '/:key.js(.:map)', (req, res)->
+    send res, 200, do ->
+
     send res, 200, coffeeCompiler[if req.params.map? then "sourceMaps" else "results"][req.params.key]
   get '/:key.css(.:map)', (req, res)->
     send res, 200, sassCompiler[if req.params.map? then "sourceMaps" else "results"][req.params.key]

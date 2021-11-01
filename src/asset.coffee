@@ -14,3 +14,8 @@ module.exports= class
         outputTo= path.resolve(path.join(config.output, @outputFilename + '.map'))
         fs.writeFile outputTo, @map, done
     ]
+  setOutputFilename: ->
+    name= @name
+    {extension, hashBust}= @constructor
+    if hashBust then name += "-" + (require "./hash")(@code)
+    @outputFilename= name + ".#{extension}"

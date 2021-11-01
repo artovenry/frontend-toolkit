@@ -7,6 +7,8 @@ sass= require "sass"
 opts= config.compilerOpts.sass
 
 module.exports= class extends Asset
+  @extension= "css"
+  @hashBust= opts.hashBust
   if config.purge?
     {PurgeCSS}= require "purgecss"
     purge: (htmls)->
@@ -20,11 +22,6 @@ module.exports= class extends Asset
       console.log "Purged: #{@entry} #{size}"
 
       @setOutputFilename()
-
-  setOutputFilename: ->
-    name= @name
-    if opts.hashBust then name += "-" + (require "./hash")(@code)
-    @outputFilename= name + ".css"
 
   compile: ->
     try

@@ -19,16 +19,15 @@ plugins= compact [
 ]
 
 module.exports= class extends Asset
+  @extension= "js"
+  @hashBust= opts.hashBust
   compile: ->
     try
       bundle= await rollup.rollup {plugins, input: path.resolve(@entry)}
       {output}= await bundle.generate format: "iife", sourcemap: opts.sourceMap
       {code, map}= output[0]
       @code= code
-      @outputFilename= do =>
-        name= @name
-        if opts.hashBust then name += "-" + (require "./hash")(code)
-        return name + ".js"
+      @setOutputFilename()
       if opts.sourceMap and map?
         @code += "\n //#sourceMappingURL=#{@outputFilename}.map"
         @map= map.toString()

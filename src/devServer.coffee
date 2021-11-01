@@ -32,7 +32,7 @@ server= new http.Server router(
   get '/:filename.js(.:map)', (req, res)->
     send res, 200, do ->
       asset= findWhere coffeeAssets, outputFilename: req.params.filename + ".js"
-      asset[if req.params.map? then map else code]
+      asset[if req.params.map? then "map" else "code"]
   get '/:filename.css(.:map)', (req, res)->
     send res, 200, do ->
       asset= findWhere sassAssets, outputFilename: req.params.filename + ".css"

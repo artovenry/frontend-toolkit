@@ -1,3 +1,5 @@
+require "coffeescript/register"
+
 path= require "path"
 config= require "./config"
 SassAsset= require "./sassAsset"
@@ -31,6 +33,6 @@ do ->
     await Promise.all map config.purge, (pugAssetNames, assetName)->
       asset= findWhere sassAssets, {name: assetName}
       .purge pugAssetNames.map (name)->findWhere(pugAssets, {name}).code
-    pugAssets.forEach (a)->
-      await a.compile()
-      a.write()
+
+    sassAssets.forEach (a)->a.write()
+    pugAssets.forEach (a)->await a.compile(); a.write()

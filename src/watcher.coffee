@@ -20,6 +20,7 @@ module.exports= class
       watcher.on "ready", =>
         await compileAll()
         done()
+        afterCompile?.bind(@)()
         watcher.on "all", (e, filepath)=>
           return if not e.match /^(add|change|unlink)$/
           await compile(filepath)

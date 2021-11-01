@@ -1,3 +1,5 @@
+require "coffeescript/register"
+
 path= require "path"
 config= require "./config"
 SassAsset= require "./sassAsset"
@@ -34,7 +36,7 @@ server= new http.Server router(
   get '/:filename.css(.:map)', (req, res)->
     send res, 200, do ->
       asset= findWhere sassAssets, outputFilename: req.params.filename + ".css"
-      asset[if req.params.map? then map else code]
+      asset[if req.params.map? then "map" else "code"]
 )
 server.listen port, host
 

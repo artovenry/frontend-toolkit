@@ -1,39 +1,36 @@
-require 'coffeescript/register'
-{entries, purge}= require "./config"
-{flatten}= require "underscore"
+path= require "path"
+config= require "./config"
 SassAsset= require "./sassAsset"
 CoffeeAsset= require "./coffeeAsset"
 PugAsset= require "./pugAsset"
+{flatten, findWhere, map}= require "underscore"
 
-sassAssets= entries.sass.map (entry)->new SassAsset entry
-coffeeAssets= entries.coffee.map (entry)->new CoffeeAsset entry
-pugAssets= entries.pug.map (entry)->new PugAsset entry
+sassAssets= config.entries.sass.map (e)->new SassAsset e
+coffeeAssets= config.entries.coffee.map (e)->new CoffeeAsset e
 
+pugAssets= config.entries.pug.map (e)->new PugAsset e
 
-compilePugs= ->
-  Promise.all pugAssets.map (a)->
-    a.updateAssets sass: sassAssets, coffee: coffeeAssets
-    a.compile()
+PugAsset.assets.sass.push asset for asset in sassAssets
+PugAsset.assets.coffee.push asset for asset in coffeeAssets
 
 do ->
   await Promise.all flatten [
-    sassAssets.map (a)->
+    sassAssets.map (a)-> new Promise (done)->
       await a.compile()
-      if not purge? then a.write()
-    coffeeAssets.map (a)->
+      done(); if not config.purge? then a.write()
+    coffeeAssets.map (a)-> new Promise (done)->
+      await a.compile()
+      done(); a.write()
+  ]
+
+  await Promise.all pugAssets.map (a)-> new Promise (done)->
+    await a.compile()
+    done(); if not config.purge? then a.write()
+
+  if config.purge?
+    await Promise.all map config.purge, (pugAssetNames, assetName)->
+      asset= findWhere sassAssets, {name: assetName}
+      .purge pugAssetNames.map (name)->findWhere(pugAssets, {name}).code
+    pugAssets.forEach (a)->
       await a.compile()
       a.write()
-  ]
-  await compilePugs()
-
-  ###
-    "global": ["index.php", "hoo.php", "bar.html"]
-  ###
-  if purge?
-    {map, findWhere}= require "underscore"
-    await Promise.all map purge, (pugAssetNames, name)->
-      sassAsset= findWhere sassAssets, {name}
-      await sassAsset.purge pugAssetNames.map (name)->
-        findWhere(pugAssets, {name}).code
-    compilePugs()
-    sassAssets.map (a)->a.write()

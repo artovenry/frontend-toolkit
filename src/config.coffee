@@ -20,7 +20,17 @@ module.exports=
   output: config.output ? "compiled"
   hashLength: config.hashLength ? 8
   assetUrl: config.assetUrl ? "http://#{dev.host}:#{dev.port}/"
-  purge: config.purge
+  purge: config.purge ? {}
+  ###
+    purge: {"someCssFilename": ["extractor1", "extractor2", "extractor3"]}
+    OR
+    purge: {"someCssFilename": {
+      htmls: ["extractor1", "extractor2", "extractor3"]
+      options: {
+        PurgeCSS options go here, for example safelist.
+      }
+    }}
+  ###
   compilerOpts:
     sass: defaults (config.compilerOpts?.sass ? {}),
       includePaths: ["node_modules"]

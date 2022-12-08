@@ -11,11 +11,13 @@ module.exports= class extends Asset
   @hashBust= opts.hashBust
   if config.purge?
     {PurgeCSS}= require "purgecss"
-    purge: (htmls)->
-      result= await new PurgeCSS().purge {
+    purge: (htmls, options)->
+      options= Object.assign({
         content: htmls.map (h)->extension: "html", raw: h
         css: [raw: @code]
-      }
+      }, options)
+
+      result= await new PurgeCSS().purge options
       @code= result[0].css
 
       size= byteSize(Buffer.byteLength(@code)).toString()
